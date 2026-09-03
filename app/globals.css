@@ -1,0 +1,188 @@
+@import "tailwindcss";
+
+/* DESIGN.md §2–§5 — the token system. */
+@theme {
+  --color-paper: #f4f1ea;
+  --color-paper-plate: #faf8f3;
+  --color-paper-sink: #ede9e0;
+  --color-ink: #16181a;
+  --color-ink-2: #55595c;
+  --color-ink-3: #83888c;
+  --color-rule: #c9c4b8;
+
+  --font-sans: var(--font-public-sans), "Public Sans", system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
+
+  --radius-*: initial;
+  --shadow-*: initial;
+
+  --ease-ui: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+:root {
+  --measure-prose: 68ch;
+  --measure-plate: 1080px;
+  --measure-bleed: 1360px;
+  --plate-pad: 20px;
+  --dur-sweep: 700ms;
+  --dur-ui: 120ms;
+  color-scheme: light only;
+}
+
+@media (max-width: 480px) {
+  :root { --plate-pad: 16px; }
+}
+
+html { background: var(--color-paper); }
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Type scale — DESIGN §3 */
+.label-xs { font: 600 10px/1.2 var(--font-sans); letter-spacing: 0.09em; text-transform: uppercase; }
+.label-sm { font: 600 11px/1.3 var(--font-sans); letter-spacing: 0.07em; text-transform: uppercase; }
+.meta     { font: 400 12px/1.4 var(--font-mono); }
+.prose    { font: 400 15px/1.62 var(--font-sans); max-width: var(--measure-prose); }
+.value-sm { font: 500 18px/1 var(--font-mono); }
+.value-md { font: 500 28px/1 var(--font-mono); letter-spacing: -0.01em; }
+.value-lg { font: 500 44px/1 var(--font-mono); letter-spacing: -0.015em; }
+.value-hero {
+  font: 500 clamp(64px, 13vw, 128px)/0.9 var(--font-mono);
+  letter-spacing: -0.025em;
+}
+
+/* The plate — DESIGN §4. Plates stack with shared rules, no gutter. */
+.sheet { border-bottom: 1px solid var(--color-rule); }
+.plate {
+  border-top: 1px solid var(--color-rule);
+  background: var(--color-paper-plate);
+}
+.plate[data-state="lost"] { border-top-style: dashed; }
+.plate-inner {
+  max-width: var(--measure-plate);
+  margin: 0 auto;
+  padding: var(--plate-pad);
+}
+.plate-inner.bleed { max-width: var(--measure-bleed); }
+.plate-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.plate-head h2 { margin: 0; color: var(--color-ink); }
+.plate-head .meta { color: var(--color-ink-3); text-align: right; }
+
+.rule-strong { border-top: 1px solid var(--color-ink); }
+.well { background: var(--color-paper-sink); }
+.overflow-well { overflow-x: auto; min-width: 0; }
+.plate-inner > * { min-width: 0; }
+
+/* Region readout rows: two columns on phones, three from 560px. */
+.region-row { display: grid; align-items: center; gap: 8px 20px; grid-template-columns: minmax(0, 1fr) auto; }
+.region-row > .spark { grid-column: 1 / -1; }
+@media (min-width: 560px) {
+  .region-row { grid-template-columns: minmax(96px, 1fr) auto minmax(120px, 2fr); }
+  .region-row > .spark { grid-column: auto; }
+}
+
+/* Links — ink, underlined, nothing else. */
+a { color: inherit; text-decoration: underline; text-underline-offset: 0.15em; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+
+/* Text buttons: tracked caps, no chrome. */
+.tbtn {
+  font: 600 11px/1.3 var(--font-sans); letter-spacing: 0.07em; text-transform: uppercase;
+  background: none; border: 1px solid var(--color-rule); color: var(--color-ink);
+  padding: 6px 10px; cursor: pointer;
+  transition: border-color var(--dur-ui) var(--ease-ui), background-color var(--dur-ui) var(--ease-ui);
+}
+.tbtn:hover { border-color: var(--color-ink); }
+.tbtn[aria-pressed="true"] { background: var(--color-ink); color: var(--color-paper); border-color: var(--color-ink); }
+
+/* Focus — DESIGN §6 */
+:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 1px var(--color-paper);
+}
+
+/* Skeleton: a dash rule where the value will be. No shimmer. */
+.dash { color: var(--color-ink-3); }
+.dash::before { content: "———"; }
+
+/* Range inputs used for the ONI zoom — stripped to a hairline and an ink thumb. */
+input[type="range"].brush {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 20px;
+  background: transparent; margin: 0;
+}
+input[type="range"].brush::-webkit-slider-runnable-track { height: 1px; background: var(--color-rule); }
+input[type="range"].brush::-moz-range-track { height: 1px; background: var(--color-rule); }
+input[type="range"].brush::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 10px; height: 16px; margin-top: -8px;
+  background: var(--color-ink); border: 0; cursor: ew-resize;
+}
+input[type="range"].brush::-moz-range-thumb {
+  width: 10px; height: 16px; background: var(--color-ink); border: 0; border-radius: 0; cursor: ew-resize;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0ms !important; animation: none !important; }
+}
+
+/* News ticker — the one standing exception to the single-motion rule (DESIGN §5). */
+.ticker {
+  display: flex;
+  align-items: stretch;
+  border-top: 1px solid var(--color-rule);
+  background: var(--color-paper-sink);
+  overflow: hidden;
+  min-height: 40px;
+}
+.ticker-label {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  background: var(--color-ink);
+  color: var(--color-paper);
+  white-space: nowrap;
+}
+.ticker-viewport { flex: 1 1 auto; min-width: 0; overflow: hidden; display: flex; align-items: center; }
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker var(--ticker-dur, 90s) linear infinite;
+  will-change: transform;
+}
+.ticker:hover .ticker-track, .ticker:focus-within .ticker-track { animation-play-state: paused; }
+.ticker-list { display: flex; flex: none; margin: 0; padding: 0; list-style: none; }
+.ticker-item { display: flex; align-items: center; gap: 10px; padding: 0 28px 0 0; white-space: nowrap; }
+.ticker-item a { text-decoration: none; display: inline-flex; align-items: center; gap: 10px; padding: 10px 0; }
+.ticker-item a:hover .ticker-headline { text-decoration: underline; text-underline-offset: 0.15em; }
+.ticker-badge { font: 600 10px/1.2 var(--font-sans); letter-spacing: 0.09em; text-transform: uppercase; border: 1px solid var(--color-ink); padding: 3px 6px; }
+.ticker-headline { font-size: 13px; }
+.ticker-age { color: var(--color-ink-3); }
+@keyframes ticker { to { transform: translateX(-50%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker { flex-wrap: wrap; }
+  .ticker-label { width: 100%; padding: 8px 14px; }
+  .ticker-viewport { display: block; }
+  .ticker-track { display: block; width: auto; animation: none; }
+  .ticker-list { display: block; }
+  .ticker-list[aria-hidden="true"] { display: none; }
+  .ticker-item { white-space: normal; padding: 0 14px; border-top: 1px solid var(--color-rule); }
+  .ticker-item a { padding: 8px 0; flex-wrap: wrap; }
+}

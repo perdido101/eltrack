@@ -103,13 +103,11 @@ Text over a ramp fill: `ink` where |anomaly| < 1.5, `paper` where ≥ 1.5.
 No accent colour exists. Links are `--ink` with a 1px underline at 0.15em offset,
 thickening on hover. That is the entire interactive palette.
 
-### 2.3 Night variant — deferred, deliberately
+### 2.3 Light only, permanently
 
-A dark mode is genuinely useful for the 5am audience, but a paper metaphor with a
-dark twin collapses into a generic dashboard. Tokens are structured so `--paper*`
-and `--ink*` can invert later **with the ramp left untouched** (it is calibrated
-against the bone neutral and must not be re-tuned per theme). Ship light-only in
-Phase 1; revisit after the map exists. Flagged as an open decision.
+Decided: no night variant. A paper metaphor with a dark twin collapses into a
+generic dashboard, and the ramp is calibrated against the bone neutral. The page
+declares `color-scheme: light only`.
 
 ---
 
@@ -175,7 +173,7 @@ sideways.
 --ease       cubic-bezier(0.22, 0.61, 0.36, 1)
 ```
 
-**The one moment:** on first paint the Pacific basin fills west→east over 700ms,
+**The one moment** (plus the wire, see §7): on first paint the Pacific basin fills west→east over 700ms,
 the ramp arriving in the direction warm water actually propagates during an event.
 It runs once. It never replays on data refresh. Under `prefers-reduced-motion:
 reduce` the map renders filled with no sweep — same final frame, zero motion.
@@ -221,7 +219,8 @@ removed.
 | # | Plate | Notes |
 |---|---|---|
 | — | **Masthead** | Wordmark at `label-sm`, one line. Below it, right-aligned, `LAST UPDATE · UTC`. Under 40px tall. The name is not the hero — the number is. |
-| 4.1 | **Current state** | `value-hero` ONI, signed, ramp-coloured. Under it the CPC classification in tracked caps. Then the threshold ladder as four hairline cells (Weak / Moderate / Strong / Very Strong) with the current band filled from the ramp. Then months-since-onset and the seasonal run of ONI values that established it. Closed by `--rule-strong`, the only heavy rule on the page. |
+| 4.1 | **Current state** | `value-hero` ONI in ink (a ramp-coloured numeral fails contrast near zero), with an 8px ramp-filled band beneath it carrying the colour. Under it the CPC classification in tracked caps. Then the threshold ladder as four hairline cells (Weak / Moderate / Strong / Very Strong) with the current band filled from the ramp. Then months-since-onset and the seasonal run of ONI values that established it. Closed by `--rule-strong`, the only heavy rule on the page. |
+| — | **Wire** | Full-bleed band directly under the hero: a continuous chyron of mainstream headlines about the event (GDELT, filtered by outlet, deduplicated, twelve max), each a source badge plus headline plus age, linking out. Pauses on hover and focus. Under reduced motion it becomes a static stacked list. This is the one standing exception to §1.7 — a second continuous motion — accepted because the bar's job is to show coverage arriving, and the type never changes register. Headlines are shown untouched. |
 | 4.2 | **Pacific basin** | Bleeds to `--measure-bleed`. Equatorial Pacific with the four Niño boxes drawn as hairline rectangles, filled from the ramp. Layer toggles as a row of tracked-caps text buttons, not pills. The load sweep lives here. The ramp legend prints once, beneath it, and serves the whole page. |
 | 4.3 | **Region readouts** | Four rows: region name, latest weekly SSTA at `value-md` ramp-coloured, 52-week sparkline with a zero rule and ramp-filled area. |
 | 4.7 | **Global SST** | One `value-lg` number, one sparkline, the record line marked as a labelled hairline. |
@@ -267,10 +266,10 @@ argument.
 
 ---
 
-## 9. Open decisions
+## 9. Decisions and open items
 
-1. **Site name** — pending.
-2. **Night variant** — deferred per §2.3; confirm that's acceptable.
+1. **Site name** — Super El Niño Monitor; domain `senmonitor.com` once registered.
+2. **Night variant** — none, permanently (§2.3).
 3. **Map anomaly baseline** — Open-Meteo Marine returns absolute SST with no
    climatology, so it cannot produce an anomaly on its own. Either a static OISST
    1991–2020 climatology grid is committed to the repo (honest, versioned,
@@ -278,3 +277,7 @@ argument.
    before 4.2 is built, not during.
 4. **On-chain token name is "Super El Niño", symbol `ElNiño`** — BRIEF §8 has
    ticker `$ElNiño`. Confirm which string the ticker row should print.
+5. **Weekly SST source** — `wksst9120.for` (1991–2020 base), not the brief's
+   `wksst8110.for`, which stopped updating in January 2021.
+6. **SOI and global SST** — BoM and Climate Reanalyzer refuse datacenter IPs;
+   NOAA substitutes (CPC Darwin/Tahiti pressures; OISST) per the Phase 2 decision.
