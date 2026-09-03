@@ -1,6 +1,9 @@
 import { Masthead } from "@/components/Masthead";
 import { CurrentState } from "@/components/CurrentState";
 import { NewsTicker } from "@/components/NewsTicker";
+import { PacificMap } from "@/components/PacificMap";
+import { GlobalSst } from "@/components/GlobalSst";
+import { SouthernOscillation } from "@/components/SouthernOscillation";
 import { RegionReadouts } from "@/components/RegionReadouts";
 import { OniHistory } from "@/components/OniHistory";
 import { Footer } from "@/components/Footer";
@@ -12,7 +15,10 @@ export default function Page() {
       <main className="sheet">
         <CurrentState />
         <NewsTicker />
+        <PacificMap />
         <RegionReadouts />
+        <GlobalSst />
+        <SouthernOscillation />
         <OniHistory />
       </main>
       <Footer />

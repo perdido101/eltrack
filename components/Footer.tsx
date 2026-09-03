@@ -3,12 +3,18 @@ import { ONI_URL } from "@/lib/sources/oni";
 import { WEEKLY_SST_URL } from "@/lib/sources/weeklySst";
 import { ALERT_URL } from "@/lib/sources/alertStatus";
 import { GDELT_URL } from "@/lib/sources/news";
+import { PACIFIC_SST_URL } from "@/lib/sources/pacificSst";
+import { GLOBAL_SST_URL } from "@/lib/sources/globalSst";
+import { SOI_URL } from "@/lib/sources/soi";
 import { CopyButton } from "./CopyButton";
 
 const SOURCES = [
   { name: "Oceanic Niño Index (ONI)", org: "NOAA Climate Prediction Center", url: ONI_URL, refresh: "6 h" },
   { name: "ENSO Alert System status and diagnostic discussion", org: "NOAA Climate Prediction Center", url: ALERT_URL, refresh: "1 h" },
   { name: "Weekly Niño-region SST (1991–2020 base)", org: "NOAA Climate Prediction Center", url: WEEKLY_SST_URL, refresh: "1 h" },
+  { name: "Equatorial Pacific SST and anomaly, 1° (OISST v2.1 NRT)", org: "NOAA NCEI via CoastWatch ERDDAP", url: PACIFIC_SST_URL, refresh: "1 h" },
+  { name: "Daily global mean SST (OISST v2.1)", org: "Climate Reanalyzer, University of Maine", url: GLOBAL_SST_URL, refresh: "1 h" },
+  { name: "Southern Oscillation Index, monthly standardised", org: "NOAA Climate Prediction Center", url: SOI_URL, refresh: "6 h" },
   { name: "News wire (English-language coverage, filtered by outlet)", org: "GDELT Project DOC 2.0", url: GDELT_URL, refresh: "15 min" },
 ];
 

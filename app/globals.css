@@ -186,3 +186,9 @@ input[type="range"].brush::-moz-range-thumb {
   .ticker-item { white-space: normal; padding: 0 14px; border-top: 1px solid var(--color-rule); }
   .ticker-item a { padding: 8px 0; flex-wrap: wrap; }
 }
+
+/* The one moment (DESIGN §5): the basin paints itself west→east once on load. */
+@keyframes sweep { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+.sweep { animation: sweep var(--dur-sweep) var(--ease-ui) 1 both; }
+.map-well { overflow-x: auto; min-width: 0; }
+.map-well svg { display: block; min-width: 720px; }
