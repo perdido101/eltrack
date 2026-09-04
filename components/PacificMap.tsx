@@ -2,6 +2,8 @@
 import { useMemo, useRef, useState } from "react";
 import { useFeed } from "@/lib/useFeed";
 import { NINO_BOXES, type PacificGrid } from "@/lib/sources/pacificSst";
+import type { Buoy, BuoysData } from "@/lib/sources/buoys";
+import { BuoyPanel } from "./BuoyPanel";
 import { rampColor } from "@/lib/ramp";
 import { fmtAnom } from "@/lib/enso";
 import { fmtDate } from "@/lib/format";
@@ -30,6 +32,10 @@ export function PacificMap() {
   const g = feed.data;
   const [layer, setLayer] = useState<Layer>("anom");
   const [showBoxes, setShowBoxes] = useState(true);
+  const [showBuoys, setShowBuoys] = useState(true);
+  const buoys = useFeed<BuoysData>("buoys", 3600_000);
+  const [picked, setPicked] = useState<string | null>(null);
+  const pickedBuoy: Buoy | undefined = buoys.data?.buoys.find((b) => b.id === picked);
   const [hover, setHover] = useState<{ lat: number; lon: number; anom: number | null; sst: number | null } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -82,6 +88,7 @@ export function PacificMap() {
               <button type="button" className="tbtn" aria-pressed={layer === "anom"} onClick={() => setLayer("anom")}>Anomaly</button>
               <button type="button" className="tbtn" aria-pressed={layer === "sst"} onClick={() => setLayer("sst")}>Sea surface temperature</button>
               <button type="button" className="tbtn" aria-pressed={showBoxes} onClick={() => setShowBoxes((v) => !v)}>Region boxes</button>
+              <button type="button" className="tbtn" aria-pressed={showBuoys} onClick={() => setShowBuoys((v) => !v)}>Buoys{buoys.data ? ` ${buoys.data.count}` : ""}</button>
             </div>
             <p className="meta m-0 text-ink-3" aria-live="polite" style={{ minHeight: 18 }}>
               {hover
@@ -131,11 +138,35 @@ export function PacificMap() {
               {[20, 0, -20].map((lat) => (
                 <text key={lat} x={0.6} y={yOf(lat) - 0.6} fontSize={2} fontFamily="var(--font-mono)" fill={INK} fillOpacity={0.7}>{latLabel(lat)}</text>
               ))}
+              {/* TAO/TRITON moorings */}
+              {showBuoys && buoys.data?.buoys.map((b) => {
+                const sel = b.id === picked;
+                return (
+                  <g
+                    key={b.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Buoy ${b.id}${b.sst ? `, SST ${b.sst.value.toFixed(1)} °C` : ""}`}
+                    aria-pressed={sel}
+                    style={{ cursor: "pointer", outline: "none" }}
+                    onClick={(e) => { e.stopPropagation(); setPicked(sel ? null : b.id); }}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setPicked(sel ? null : b.id); } }}
+                  >
+                    <circle cx={xOf(b.lon)} cy={yOf(b.lat)} r={sel ? 1.6 : 1.1} fill={sel ? INK : "#F4F1EA"} stroke={INK} strokeWidth={0.35} />
+                    {!b.sst && <line x1={xOf(b.lon) - 0.7} x2={xOf(b.lon) + 0.7} y1={yOf(b.lat)} y2={yOf(b.lat)} stroke={INK} strokeWidth={0.3} />}
+                  </g>
+                );
+              })}
               {!g && <text x={W / 2} y={H / 2} textAnchor="middle" fontSize={3} fontFamily="var(--font-mono)" fill="#83888C">———</text>}
             </svg>
           </div>
 
-          <div className="grid gap-x-8 gap-y-3 sm:items-end" style={{ gridTemplateColumns: "minmax(220px, 320px) minmax(0, 1fr)" }}>
+          {showBuoys && (pickedBuoy ? <BuoyPanel buoy={pickedBuoy} onClose={() => setPicked(null)} /> : (
+            <p className="meta m-0 text-ink-3">
+              {buoys.data ? `${buoys.data.count} TAO/TRITON moorings reporting in the last six days (NOAA PMEL). Select one for its latest surface and subsurface temperatures; a dash marks a mooring with no recent SST.` : buoys.error ? `Buoys: signal lost · PMEL ERDDAP · ${buoys.error}` : "Buoys loading"}
+            </p>
+          ))}
+          <div className="legend-row">
             {layer === "anom" ? <RampLegend /> : (
               <div className="grid gap-1">
                 <div style={{ height: 10, border: "1px solid var(--color-rule)", background: `linear-gradient(90deg, ${sstColor(16)}, ${sstColor(32)})` }} />

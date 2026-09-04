@@ -5,7 +5,10 @@ import { PacificMap } from "@/components/PacificMap";
 import { GlobalSst } from "@/components/GlobalSst";
 import { SouthernOscillation } from "@/components/SouthernOscillation";
 import { RegionReadouts } from "@/components/RegionReadouts";
-import { OniHistory } from "@/components/OniHistory";
+import { OniSection } from "@/components/OniSection";
+import { Subsurface } from "@/components/Subsurface";
+import { ForecastPlume } from "@/components/ForecastPlume";
+import { Glossary } from "@/components/Glossary";
 import { Footer } from "@/components/Footer";
 
 export default function Page() {
@@ -18,8 +21,11 @@ export default function Page() {
         <PacificMap />
         <RegionReadouts />
         <GlobalSst />
+        <Subsurface />
         <SouthernOscillation />
-        <OniHistory />
+        <ForecastPlume />
+        <OniSection />
+        <Glossary />
       </main>
       <Footer />
     </>

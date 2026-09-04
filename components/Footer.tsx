@@ -6,6 +6,9 @@ import { GDELT_URL } from "@/lib/sources/news";
 import { PACIFIC_SST_URL } from "@/lib/sources/pacificSst";
 import { GLOBAL_SST_URL } from "@/lib/sources/globalSst";
 import { SOI_URL } from "@/lib/sources/soi";
+import { HEAT_CONTENT_URL } from "@/lib/sources/heatContent";
+import { BUOYS_URL } from "@/lib/sources/buoys";
+import { IRI_URL } from "@/lib/sources/plume";
 import { CopyButton } from "./CopyButton";
 
 const SOURCES = [
@@ -15,6 +18,9 @@ const SOURCES = [
   { name: "Equatorial Pacific SST and anomaly, 1° (OISST v2.1 NRT)", org: "NOAA NCEI via CoastWatch ERDDAP", url: PACIFIC_SST_URL, refresh: "1 h" },
   { name: "Daily global mean SST (OISST v2.1)", org: "Climate Reanalyzer, University of Maine", url: GLOBAL_SST_URL, refresh: "1 h" },
   { name: "Southern Oscillation Index, monthly standardised", org: "NOAA Climate Prediction Center", url: SOI_URL, refresh: "6 h" },
+  { name: "Equatorial upper-300 m heat content anomaly, monthly", org: "NOAA Climate Prediction Center", url: HEAT_CONTENT_URL, refresh: "6 h" },
+  { name: "TAO/TRITON moorings: daily SST, subsurface temperature, 20 °C isotherm", org: "NOAA PMEL via ERDDAP", url: BUOYS_URL, refresh: "1 h" },
+  { name: "Model-based probabilistic ENSO forecast (read from the published figure)", org: "CCSR/IRI, Columbia Climate School", url: IRI_URL, refresh: "6 h" },
   { name: "News wire (English-language coverage, filtered by outlet)", org: "GDELT Project DOC 2.0", url: GDELT_URL, refresh: "15 min" },
 ];
 

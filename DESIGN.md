@@ -226,18 +226,19 @@ removed.
 | 4.7 | **Global SST** | One `value-lg` number, one sparkline, the record line marked as a labelled hairline. |
 | 4.8 | **Subsurface** | Upper-300m heat content anomaly, three longitude bands, with a note that this is the leading indicator. Currently the most dramatic panel on the page. |
 | 4.4 | **Southern Oscillation** | The atmospheric half. Monthly standardised SOI from CPC Darwin/Tahiti, with the historical range as a grey band behind. Labelled with the exact product shown. |
-| 4.5 | **Forecast plume** | Nine overlapping seasons, stacked bars, three outcomes. |
-| 4.6 | **Buoy array** | Reads as an annex to 4.2 rather than a separate map. |
+| 4.5 | **Forecast plume** | Nine overlapping seasons, stacked bars, three outcomes. CCSR/IRI model-based probabilities, read live from the geometry of IRI's published SVG figure and checked against the axis ticks; a frozen, dated copy is the fallback. |
+| 4.6 | **Buoy array** | Folded into 4.2 as a layer (the cut proposed after Phase 1): TAO/TRITON moorings from PMEL's ERDDAP drawn on the basin map; selecting one opens a panel beneath with SST, 20 °C isotherm depth, and the temperature profile to 300 m. |
 | 4.11 | **ONI history** | 1950→now, bars ramp-coloured by value, event bands behind. Zoom by brush. |
-| 4.10 | **Historical events** | Table. Row click highlights that window in 4.11 above. |
+| 4.10 | **Historical events** | Table derived from the ONI file with CPC's five-season rule, so it updates as the record does. Row click frames that episode in 4.11 above. |
 | 4.12 | **Impacts** | Prose at `--measure-prose`. Sourced, attributed inline. |
 | 4.13 | **News wire** | Rows: relative time in `meta`, headline in `body`, source in `label-xs`. |
 | 5.1 | **Market anomalies** | Below every climate module. Same plate, same type, same ramp — no visual break in register, which is what makes it read as a curiosity rather than a pitch. |
 | — | **Footer** | Sources with refresh intervals, disclaimers, CA, links, `?` hint. |
 
 4.9 (trade winds) is omitted until a clean source is confirmed, per BRIEF §4.9.
-4.14 (glossary) is not a plate — it is a dotted underline on defined terms
-throughout, opening an inline definition on hover/focus/tap.
+4.14 (glossary) is both: a dotted underline on defined terms throughout, opening an
+inline definition on hover/focus/tap, and a compact plate before the footer.
+4.12 (impacts) is not scheduled in the brief's build order; proposed for Phase 4.
 
 ---
 
@@ -279,5 +280,10 @@ argument.
    ticker `$ElNiño`. Confirm which string the ticker row should print.
 5. **Weekly SST source** — `wksst9120.for` (1991–2020 base), not the brief's
    `wksst8110.for`, which stopped updating in January 2021.
-6. **SOI and global SST** — BoM and Climate Reanalyzer refuse datacenter IPs;
-   NOAA substitutes (CPC Darwin/Tahiti pressures; OISST) per the Phase 2 decision.
+6. **SOI and global SST** — BoM blocks non-browser clients and now points users
+   elsewhere for SOI data, so SOI is CPC's standardised monthly series. Climate
+   Reanalyzer accepted an honest user-agent, so global SST is as the brief specified.
+7. **Map source** — NOAA OISST v2.1 NRT via CoastWatch ERDDAP instead of
+   Open-Meteo: it carries a real anomaly, so no baseline had to be invented.
+8. **Scroll wells** use `contain: inline-size` so a wide strip can never widen the
+   grid track it sits in; the legend row stacks below 640px for the same reason.

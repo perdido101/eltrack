@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 type Props = {
   id: string;
-  title: string;
+  title: ReactNode;
   /** Right-aligned provenance line: source · observation date · refresh. */
   provenance?: ReactNode;
   state?: "ok" | "loading" | "lost" | "stale";

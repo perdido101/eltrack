@@ -7,6 +7,7 @@ import { fmtMonth } from "@/lib/format";
 import { Plate } from "./Plate";
 import { Provenance } from "./Provenance";
 import { SignalLost } from "./SignalLost";
+import { Term } from "./Term";
 
 const W = 1000, H = 220, PAD = { top: 12, right: 8, bottom: 20, left: 34 };
 const YMAX = 4;
@@ -73,8 +74,8 @@ export function SouthernOscillation() {
               <text key={m.month} x={PAD.left + i * bw + bw / 2} y={H - 5} textAnchor="middle" fontSize="10" fontFamily="var(--font-mono)" fill="#55595C">{m.month.slice(0, 4)}</text>
             ) : null)}
           </svg>
-          <p className="meta m-0 text-ink-3">
-            Standardised Tahiti − Darwin sea-level pressure. Negative values accompany El Niño; sustained values beyond ±1 indicate a coupled event. Grey band: the full 1951–present range for that calendar month.
+          <p className="meta m-0 text-ink-3" style={{ fontFamily: "var(--font-sans)", fontSize: 13 }}>
+            The <Term k="soi">SOI</Term>: standardised Tahiti − Darwin sea-level pressure, the atmospheric half of ENSO. Negative values mean the <Term k="walker">Walker circulation</Term> has weakened, as it does during El Niño; sustained values beyond ±1 indicate a coupled event. Grey band: the full 1951–present range for that calendar month.
           </p>
         </div>
       )}

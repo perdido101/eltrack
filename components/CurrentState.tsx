@@ -8,6 +8,7 @@ import { fmtCpcDate, fmtMonth } from "@/lib/format";
 import { Plate } from "./Plate";
 import { Provenance } from "./Provenance";
 import { SignalLost } from "./SignalLost";
+import { Term } from "./Term";
 
 const HOUR = 3600_000;
 
@@ -40,7 +41,7 @@ export function CurrentState() {
           {/* The number */}
           <div>
             <p className="label-xs m-0 text-ink-3">
-              {latest ? `3-month mean SST anomaly, Niño 3.4 · ${latest.season} ${latest.year}` : "3-month mean SST anomaly, Niño 3.4"}
+              <Term k="oni">ONI</Term> · 3-month mean SST anomaly, <Term k="nino34">Niño 3.4</Term>{latest ? ` · ${latest.season} ${latest.year}` : ""}
             </p>
             <p className="value-hero m-0 mt-1" aria-live="polite">
               {latest ? fmtAnom(latest.anom, 2) : <span className="dash" aria-label="loading" />}
@@ -54,7 +55,7 @@ export function CurrentState() {
 
           {/* CPC alert status — verbatim from the diagnostic discussion */}
           <div className="grid gap-1">
-            <p className="label-xs m-0 text-ink-3">ENSO Alert System status</p>
+            <p className="label-xs m-0 text-ink-3"><Term k="enso">ENSO</Term> Alert System status</p>
             <p className="m-0" style={{ font: "600 clamp(18px, 3.2vw, 26px)/1.1 var(--font-sans)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
               {alert.data ? alert.data.status : alert.error ? <span className="text-ink-3">Status unavailable</span> : <span className="dash" />}
             </p>

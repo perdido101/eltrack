@@ -86,7 +86,8 @@ body {
 
 .rule-strong { border-top: 1px solid var(--color-ink); }
 .well { background: var(--color-paper-sink); }
-.overflow-well { overflow-x: auto; min-width: 0; }
+/* Containment stops a scroll well from widening the auto grid track it sits in. */
+.overflow-well { overflow-x: auto; min-width: 0; contain: inline-size; }
 .plate-inner > * { min-width: 0; }
 
 /* Region readout rows: two columns on phones, three from 560px. */
@@ -190,5 +191,28 @@ input[type="range"].brush::-moz-range-thumb {
 /* The one moment (DESIGN §5): the basin paints itself west→east once on load. */
 @keyframes sweep { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 .sweep { animation: sweep var(--dur-sweep) var(--ease-ui) 1 both; }
-.map-well { overflow-x: auto; min-width: 0; }
+.map-well { overflow-x: auto; min-width: 0; contain: inline-size; }
 .map-well svg { display: block; min-width: 720px; }
+.legend-row { display: grid; gap: 12px 32px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 640px) {
+  .legend-row { grid-template-columns: minmax(220px, 320px) minmax(0, 1fr); align-items: end; }
+}
+
+/* Glossary terms — dotted underline, definition in a small plate. */
+.term { position: relative; display: inline; }
+.term-btn {
+  all: unset; cursor: help; text-decoration: underline dotted; text-decoration-thickness: 1px; text-underline-offset: 0.2em;
+}
+.term-btn:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }
+.term-pop {
+  position: absolute; left: 0; top: calc(100% + 6px); z-index: 20;
+  width: min(320px, 86vw); padding: 10px 12px;
+  background: var(--color-paper-plate); border: 1px solid var(--color-ink);
+  font: 400 13px/1.5 var(--font-sans); color: var(--color-ink); text-transform: none; letter-spacing: 0;
+}
+.plate-inner table { border-collapse: collapse; width: 100%; }
+.plate-inner th { text-align: left; font: 600 10px/1.2 var(--font-sans); letter-spacing: 0.09em; text-transform: uppercase; color: var(--color-ink-3); padding: 6px 10px 6px 0; border-bottom: 1px solid var(--color-ink); }
+.plate-inner td { padding: 7px 10px 7px 0; border-bottom: 1px solid var(--color-rule); vertical-align: baseline; }
+.row-btn { cursor: pointer; }
+.row-btn:hover { background: var(--color-paper-sink); }
+.row-btn[aria-selected="true"] { background: var(--color-paper-sink); box-shadow: inset 2px 0 0 var(--color-ink); }

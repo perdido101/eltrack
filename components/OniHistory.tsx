@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useFeed } from "@/lib/useFeed";
-import type { OniData, OniRow } from "@/lib/sources/oni";
+import type { OniData, OniEvent, OniRow } from "@/lib/sources/oni";
 import { fmtAnom, phaseFor, strengthFor } from "@/lib/enso";
 import { rampColor } from "@/lib/ramp";
 import { fmtMonth } from "@/lib/format";
@@ -14,7 +14,7 @@ const H = 280;
 const PAD = { top: 12, right: 8, bottom: 22, left: 34 };
 const YMAX = 3;
 
-export function OniHistory() {
+export function OniHistory({ highlight }: { highlight?: OniEvent | null }) {
   const feed = useFeed<OniData>("oni", 6 * 3600_000);
   const state = feed.isLoading ? "loading" : feed.error && !feed.data ? "lost" : feed.error ? "stale" : "ok";
   const series = feed.data?.series ?? [];
@@ -81,6 +81,16 @@ export function OniHistory() {
     if (e.key === "End") { setCursor(i1); e.preventDefault(); }
     if (e.key === "Escape") { setRange(null); }
   };
+
+  // Frame a selected episode with two years either side.
+  useEffect(() => {
+    if (!highlight || !series.length) return;
+    const a = series.findIndex((r) => r.centre === highlight.start);
+    const b = series.findIndex((r) => r.centre === highlight.end);
+    if (a < 0 || b < 0) return;
+    setRange([Math.max(0, a - 24), Math.min(series.length - 1, b + 24)]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlight?.start, series.length]);
 
   // Keep the cursor inside the visible window when the range changes.
   useEffect(() => {
@@ -192,6 +202,14 @@ export function OniHistory() {
                 <text x={xOf(d.idx)} y={H - 6} textAnchor="middle" fontSize="10" fontFamily="var(--font-mono)" fill="#55595C">{d.year}</text>
               </g>
             ))}
+
+            {/* Selected episode */}
+            {highlight && (() => {
+              const a = centreIdx(highlight.start), b = centreIdx(highlight.end);
+              if (a < 0 || b < i0 || a > i1) return null;
+              const x0 = xOf(Math.max(a, i0)), x1 = xOf(Math.min(b, i1)) + bw;
+              return <rect x={x0} y={PAD.top} width={x1 - x0} height={plotH} fill="none" stroke="#16181A" strokeWidth={1.25} />;
+            })()}
 
             {/* Cursor */}
             {cursor != null && cursor >= i0 && cursor <= i1 && (
