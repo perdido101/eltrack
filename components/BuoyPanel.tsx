@@ -34,6 +34,7 @@ export function BuoyPanel({ buoy, onClose }: { buoy: Buoy; onClose: () => void }
         </dl>
         <p className="meta m-0 text-ink-3">The 20 °C isotherm tracks the thermocline. Near 140°W it normally sits close to 50 m.</p>
       </div>
+      {prof.length > 1 && (
       <svg viewBox={`0 0 ${W} ${H}`} width={W} style={{ maxWidth: "100%", display: "block" }} role="img" aria-label="Temperature against depth to 300 m">
         {[10, 15, 20, 25, 30].map((t) => (
           <g key={t}>
@@ -50,6 +51,7 @@ export function BuoyPanel({ buoy, onClose }: { buoy: Buoy; onClose: () => void }
         )}
         {prof.map((p) => <circle key={p.depth} cx={x(Math.min(tMax, Math.max(tMin, p.t)))} cy={y(p.depth)} r={1.6} fill="#16181A" />)}
       </svg>
+      )}
     </div>
   );
 }
