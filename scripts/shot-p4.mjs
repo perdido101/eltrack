@@ -1,0 +1,15 @@
+import { chromium } from "playwright-core";
+const S = "/tmp/claude-0/-home-user-eltrack/22b0563f-70d4-5e87-bf7e-22d8d53f27b7/scratchpad";
+const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
+const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+await page.goto("http://localhost:3100/", { waitUntil: "load" });
+await page.waitForFunction(() => !document.querySelector('section[aria-labelledby="market-h"] .dash'), null, { timeout: 40000 }).catch(() => {});
+await page.locator('section[aria-labelledby="market-h"] input[type=range]').fill("6");
+await page.waitForTimeout(400);
+await page.locator('section[aria-labelledby="market-h"]').screenshot({ path: `${S}/p4-market.png` });
+await page.locator("body").click({ position: { x: 5, y: 400 } });
+await page.keyboard.press("Shift+?");
+await page.waitForTimeout(400);
+await page.screenshot({ path: `${S}/p4-about.png` });
+await browser.close();
+console.log("ok");

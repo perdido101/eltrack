@@ -10,6 +10,7 @@ import { Impacts } from "@/components/Impacts";
 import { NewsList } from "@/components/NewsList";
 import { Glossary } from "@/components/Glossary";
 import { GlobalSst } from "@/components/GlobalSst";
+import { Market } from "@/components/Market";
 import { Footer } from "@/components/Footer";
 
 export default function Page() {
@@ -28,6 +29,7 @@ export default function Page() {
         <Impacts />
         <NewsList />
         <Glossary />
+        <Market />
       </main>
       <Footer />
     </>

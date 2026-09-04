@@ -9,7 +9,10 @@ import { SOI_URL } from "@/lib/sources/soi";
 import { HEAT_CONTENT_URL } from "@/lib/sources/heatContent";
 import { BUOYS_URL } from "@/lib/sources/buoys";
 import { IRI_URL } from "@/lib/sources/plume";
+import { BTC_URL } from "@/lib/sources/btc";
+import { DEXSCREENER_URL } from "@/lib/sources/token";
 import { CopyButton } from "./CopyButton";
+import { AboutLauncher } from "./AboutLauncher";
 
 const SOURCES = [
   { name: "El Niño index (ONI)", org: "NOAA Climate Prediction Center", url: ONI_URL, every: "6 hours" },
@@ -22,6 +25,8 @@ const SOURCES = [
   { name: "Heat stored under the surface", org: "NOAA Climate Prediction Center", url: HEAT_CONTENT_URL, every: "6 hours" },
   { name: "Forecast probabilities", org: "IRI, Columbia Climate School", url: IRI_URL, every: "6 hours" },
   { name: "News headlines", org: "GDELT Project", url: GDELT_URL, every: "15 minutes" },
+  { name: "Bitcoin price history", org: "Blockchain.com", url: BTC_URL, every: "hour" },
+  { name: "Token price", org: "DexScreener (pump.fun as fallback)", url: DEXSCREENER_URL, every: "30 seconds" },
 ];
 
 export function Footer() {
@@ -59,6 +64,7 @@ export function Footer() {
           </p>
         )}
       </div>
+      <AboutLauncher />
     </footer>
   );
 }
