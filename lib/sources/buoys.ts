@@ -77,23 +77,36 @@ export function buildBuoys(sst: Table, iso: Table | null, temp: Table | null): B
   return [...byId.values()].sort((a, b) => a.lon - b.lon || b.lat - a.lat);
 }
 
-async function table(url: string): Promise<Table> {
-  return (JSON.parse(await fetchText(url, REVALIDATE.daily, 40_000)) as { table: Table }).table;
+async function table(url: string, timeoutMs = 25_000): Promise<Table> {
+  return (JSON.parse(await fetchText(url, REVALIDATE.daily, timeoutMs)) as { table: Table }).table;
+}
+
+async function retry<T>(fn: () => Promise<T>, times = 2): Promise<T> {
+  let err: unknown;
+  for (let i = 0; i < times; i++) {
+    try { return await fn(); } catch (e) { err = e; await new Promise((r) => setTimeout(r, 1000)); }
+  }
+  throw err;
 }
 
 export async function getBuoys(): Promise<Result<BuoysData>> {
   try {
     // Moorings report daily with a lag of a day or two; six days catches every
     // active one, and orderByMax returns only the latest report per station.
-    const since = new Date(Date.now() - 6 * 86_400_000).toISOString().slice(0, 10);
-    const where = `&time%3E=${since}T00:00:00Z&longitude%3E=120&longitude%3C=290`;
-    const [sst, iso, temp] = await Promise.allSettled([
-      table(`${BASE}/pmelTaoDySst.json?station,longitude,latitude,time,T_25${where}&orderByMax(%22station,time%22)`),
-      table(`${BASE}/pmelTaoDyIso.json?station,time,ISO_6${where}&orderByMax(%22station,time%22)`),
-      table(`${BASE}/pmelTaoDyT.json?station,depth,time,T_20${where}&orderByMax(%22station,depth,time%22)`),
+    const day = 86_400_000;
+    const box = "&longitude%3E=120&longitude%3C=290";
+    const since = (days: number) => `&time%3E=${new Date(Date.now() - days * day).toISOString().slice(0, 10)}T00:00:00Z`;
+    // Positions and SST are the essentials and answer quickly; fetch them alone first
+    // so a slow subsurface query cannot take the whole array down with it.
+    const sst = await retry(() =>
+      table(`${BASE}/pmelTaoDySst.json?station,longitude,latitude,time,T_25${since(6)}${box}&orderByMax(%22station,time%22)`),
+    );
+    // Subsurface extras: a short window keeps the profile query small enough to answer.
+    const [iso, temp] = await Promise.allSettled([
+      table(`${BASE}/pmelTaoDyIso.json?station,time,ISO_6${since(6)}${box}&orderByMax(%22station,time%22)`),
+      table(`${BASE}/pmelTaoDyT.json?station,depth,time,T_20${since(3)}${box}`, 40_000),
     ]);
-    if (sst.status === "rejected") throw sst.reason;
-    const buoys = buildBuoys(sst.value, iso.status === "fulfilled" ? iso.value : null, temp.status === "fulfilled" ? temp.value : null);
+    const buoys = buildBuoys(sst, iso.status === "fulfilled" ? iso.value : null, temp.status === "fulfilled" ? temp.value : null);
     if (!buoys.length) return fail("No reporting TAO buoys in the last six days");
     return ok({ buoys, count: buoys.length });
   } catch (e) {
