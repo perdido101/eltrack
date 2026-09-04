@@ -8,5 +8,5 @@ export const PROJECT = {
     address: "2hbzoDxzvyspvXhxFkHkuxRNDyo3j2Z6aXUDy1A7pump",
     chain: "solana",
   },
-  links: { x: "PENDING", telegram: "PENDING" },
+  links: { x: "https://x.com/SuperElnino_", telegram: "PENDING" },
 } as const;
