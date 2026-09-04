@@ -45,8 +45,10 @@ export function parsePlumeSvg(svg: string, issueYear: number): Omit<PlumeData, "
 
   const seasons: PlumeSeason[] = [];
   let year = issueYear;
+  // Year labels follow NOAA: DJF belongs to the January/February year, so it starts the new year.
+  const eff = (s: string) => (s === "DJF" ? -1 : SEASON_START[s]);
   ticks.forEach((tk, i) => {
-    if (i > 0 && SEASON_START[tk.t] < SEASON_START[ticks[i - 1].t]) year++;
+    if (i > 0 && eff(tk.t) < eff(ticks[i - 1].t)) year++;
     seasons.push({ season: tk.t, year, elNino: 0, neutral: 0, laNina: 0 });
   });
 

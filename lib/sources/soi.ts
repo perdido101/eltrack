@@ -20,6 +20,8 @@ export type SoiData = {
   percentile: number;
   /** Lowest value ever recorded, with its month. */
   min: SoiMonth;
+  /** The last month before the current year at or below the latest value; null = none since 1951. */
+  lowestSince: string | null;
 };
 
 const ROW = /^(\d{4})((?:\s*-?\d+\.\d)+)\s*$/;
@@ -53,7 +55,12 @@ export function deriveSoi(series: SoiMonth[]): SoiData {
     if (s.value < min.value) min = s;
   }
   const below = series.filter((s) => s.value <= latest.value).length;
-  return { series, latest, rangeByMonth, percentile: below / series.length, min };
+  let lowestSince: string | null = null;
+  for (let i = series.length - 2; i >= 0; i--) {
+    if (series[i].month.slice(0, 4) === latest.month.slice(0, 4)) continue;
+    if (series[i].value <= latest.value) { lowestSince = series[i].month; break; }
+  }
+  return { series, latest, rangeByMonth, percentile: below / series.length, min, lowestSince };
 }
 
 export async function getSoi(): Promise<Result<SoiData>> {

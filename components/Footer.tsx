@@ -12,16 +12,16 @@ import { IRI_URL } from "@/lib/sources/plume";
 import { CopyButton } from "./CopyButton";
 
 const SOURCES = [
-  { name: "Oceanic Niño Index (ONI)", org: "NOAA Climate Prediction Center", url: ONI_URL, refresh: "6 h" },
-  { name: "ENSO Alert System status and diagnostic discussion", org: "NOAA Climate Prediction Center", url: ALERT_URL, refresh: "1 h" },
-  { name: "Weekly Niño-region SST (1991–2020 base)", org: "NOAA Climate Prediction Center", url: WEEKLY_SST_URL, refresh: "1 h" },
-  { name: "Equatorial Pacific SST and anomaly, 1° (OISST v2.1 NRT)", org: "NOAA NCEI via CoastWatch ERDDAP", url: PACIFIC_SST_URL, refresh: "1 h" },
-  { name: "Daily global mean SST (OISST v2.1)", org: "Climate Reanalyzer, University of Maine", url: GLOBAL_SST_URL, refresh: "1 h" },
-  { name: "Southern Oscillation Index, monthly standardised", org: "NOAA Climate Prediction Center", url: SOI_URL, refresh: "6 h" },
-  { name: "Equatorial upper-300 m heat content anomaly, monthly", org: "NOAA Climate Prediction Center", url: HEAT_CONTENT_URL, refresh: "6 h" },
-  { name: "TAO/TRITON moorings: daily SST, subsurface temperature, 20 °C isotherm", org: "NOAA PMEL via ERDDAP", url: BUOYS_URL, refresh: "1 h" },
-  { name: "Model-based probabilistic ENSO forecast (read from the published figure)", org: "CCSR/IRI, Columbia Climate School", url: IRI_URL, refresh: "6 h" },
-  { name: "News wire (English-language coverage, filtered by outlet)", org: "GDELT Project DOC 2.0", url: GDELT_URL, refresh: "15 min" },
+  { name: "El Niño index (ONI)", org: "NOAA Climate Prediction Center", url: ONI_URL, every: "6 hours" },
+  { name: "Official alert status and forecasters' discussion", org: "NOAA Climate Prediction Center", url: ALERT_URL, every: "hour" },
+  { name: "Weekly temperatures for the four Pacific regions", org: "NOAA Climate Prediction Center", url: WEEKLY_SST_URL, every: "hour" },
+  { name: "Satellite map of the Pacific (OISST v2.1)", org: "NOAA, via CoastWatch ERDDAP", url: PACIFIC_SST_URL, every: "hour" },
+  { name: "Ocean buoys (TAO/TRITON)", org: "NOAA PMEL, via ERDDAP", url: BUOYS_URL, every: "hour" },
+  { name: "Global ocean temperature, daily", org: "Climate Reanalyzer, University of Maine", url: GLOBAL_SST_URL, every: "hour" },
+  { name: "Pacific pressure index (SOI)", org: "NOAA Climate Prediction Center", url: SOI_URL, every: "6 hours" },
+  { name: "Heat stored under the surface", org: "NOAA Climate Prediction Center", url: HEAT_CONTENT_URL, every: "6 hours" },
+  { name: "Forecast probabilities", org: "IRI, Columbia Climate School", url: IRI_URL, every: "6 hours" },
+  { name: "News headlines", org: "GDELT Project", url: GDELT_URL, every: "15 minutes" },
 ];
 
 export function Footer() {
@@ -31,48 +31,34 @@ export function Footer() {
   ].filter(Boolean) as { label: string; href: string }[];
 
   return (
-    <footer className="plate-inner grid gap-8" style={{ paddingTop: 32, paddingBottom: 48 }}>
-      <section aria-labelledby="sources-title">
-        <h2 id="sources-title" className="label-sm m-0 mb-3">Data sources</h2>
-        <ul className="m-0 list-none p-0">
-          {SOURCES.map((s) => (
-            <li key={s.url} className="flex flex-wrap justify-between gap-x-6 gap-y-0 py-2" style={{ borderTop: "1px solid var(--color-rule)" }}>
-              <span>
-                <a href={s.url} target="_blank" rel="noopener noreferrer">{s.name}</a>
-                <span className="meta ml-2 text-ink-3">{s.org}</span>
-              </span>
-              <span className="meta text-ink-3">refresh {s.refresh}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section aria-labelledby="notes-title" className="prose">
-        <h2 id="notes-title" className="label-sm m-0 mb-3">Notes</h2>
-        <p className="m-0 text-ink-2">
-          {PROJECT.name} is not affiliated with NOAA, the Climate Prediction Center, IRI, the Bureau of
-          Meteorology or PMEL. Data are shown as published by those agencies and may lag their official
-          releases. Values are never estimated or filled in: when a feed cannot be reached, the panel says so.
+    <footer className="card" style={{ marginBottom: 40 }}>
+      <h2 className="headline" style={{ fontSize: 22 }}>Where the data comes from</h2>
+      <ul className="m-0 list-none p-0">
+        {SOURCES.map((s) => (
+          <li key={s.url} className="flex flex-wrap justify-between gap-x-6 gap-y-0 py-2" style={{ borderTop: "1px solid var(--color-rule)" }}>
+            <span><a href={s.url} target="_blank" rel="noopener noreferrer">{s.name}</a><span className="caption ml-2">{s.org}</span></span>
+            <span className="caption">checked every {s.every}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="grid gap-3" style={{ fontSize: 15 }}>
+        <p className="m-0">
+          {PROJECT.name} isn't affiliated with NOAA, the Climate Prediction Center, IRI, Australia's Bureau of Meteorology or PMEL. The data is shown as those agencies publish it and may lag their official releases. Nothing is estimated or filled in: when a source can't be reached, the panel says so.
         </p>
-        <p className="m-0 mt-3 text-ink-2">
-          {PROJECT.token.ticker} is a memecoin with no intrinsic value. Nothing on this page is financial advice.
-        </p>
-      </section>
-
-      <section aria-labelledby="ca-title">
-        <h2 id="ca-title" className="label-sm m-0 mb-3">{PROJECT.token.ticker} · Solana contract</h2>
+        <p className="m-0">{PROJECT.token.ticker} is a memecoin with no intrinsic value. Nothing on this page is financial advice.</p>
+      </div>
+      <div className="grid gap-2">
+        <p className="caption m-0">{PROJECT.token.ticker} · Solana contract address</p>
         <div className="flex flex-wrap items-center gap-3">
-          <code className="meta well px-3 py-2" style={{ overflowWrap: "anywhere" }}>{PROJECT.token.address}</code>
+          <code className="source well-bg px-3 py-2" style={{ overflowWrap: "anywhere", color: "var(--color-ink-2)" }}>{PROJECT.token.address}</code>
           <CopyButton text={PROJECT.token.address} />
         </div>
         {links.length > 0 && (
-          <p className="meta m-0 mt-3">
-            {links.map((l, i) => (
-              <span key={l.label}>{i > 0 && " · "}<a href={l.href} target="_blank" rel="noopener noreferrer">{l.label}</a></span>
-            ))}
+          <p className="m-0" style={{ fontSize: 15 }}>
+            {links.map((l, i) => <span key={l.label}>{i > 0 && " · "}<a href={l.href} target="_blank" rel="noopener noreferrer">{l.label}</a></span>)}
           </p>
         )}
-      </section>
+      </div>
     </footer>
   );
 }

@@ -1,30 +1,32 @@
-import { Masthead } from "@/components/Masthead";
-import { CurrentState } from "@/components/CurrentState";
-import { NewsTicker } from "@/components/NewsTicker";
+import { StickyStrip } from "@/components/StickyStrip";
+import { RightNow } from "@/components/RightNow";
 import { PacificMap } from "@/components/PacificMap";
-import { GlobalSst } from "@/components/GlobalSst";
-import { SouthernOscillation } from "@/components/SouthernOscillation";
-import { RegionReadouts } from "@/components/RegionReadouts";
-import { OniSection } from "@/components/OniSection";
+import { Regions } from "@/components/Regions";
+import { Compare } from "@/components/Compare";
+import { Atmosphere } from "@/components/Atmosphere";
 import { Subsurface } from "@/components/Subsurface";
 import { ForecastPlume } from "@/components/ForecastPlume";
+import { Impacts } from "@/components/Impacts";
+import { NewsList } from "@/components/NewsList";
 import { Glossary } from "@/components/Glossary";
+import { GlobalSst } from "@/components/GlobalSst";
 import { Footer } from "@/components/Footer";
 
 export default function Page() {
   return (
     <>
-      <Masthead />
-      <main className="sheet">
-        <CurrentState />
-        <NewsTicker />
+      <StickyStrip />
+      <main className="page">
+        <RightNow />
         <PacificMap />
-        <RegionReadouts />
-        <GlobalSst />
+        <Regions />
+        <Compare />
+        <Atmosphere />
         <Subsurface />
-        <SouthernOscillation />
         <ForecastPlume />
-        <OniSection />
+        <GlobalSst />
+        <Impacts />
+        <NewsList />
         <Glossary />
       </main>
       <Footer />

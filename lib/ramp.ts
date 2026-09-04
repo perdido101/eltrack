@@ -3,19 +3,19 @@
  * Diverging, anchored at 0 °C, clamped to ±3, interpolated in Oklab.
  */
 export const RAMP_STOPS: ReadonlyArray<readonly [number, string]> = [
-  [-3.0, "#0B3B57"],
-  [-2.5, "#10506F"],
-  [-2.0, "#1A6785"],
-  [-1.5, "#3A819A"],
-  [-1.0, "#6BA0B0"],
-  [-0.5, "#A8C4C8"],
-  [0.0, "#E8E4D9"],
-  [0.5, "#E5C9A3"],
-  [1.0, "#DDA46F"],
-  [1.5, "#CE7A45"],
-  [2.0, "#B85326"],
-  [2.5, "#9A3313"],
-  [3.0, "#74180B"],
+  [-3.0, "#8FD0F5"],
+  [-2.5, "#5FADE6"],
+  [-2.0, "#3C8BD0"],
+  [-1.5, "#2C6AA6"],
+  [-1.0, "#244C78"],
+  [-0.5, "#22354F"],
+  [0.0, "#1C2433"],
+  [0.5, "#4A3529"],
+  [1.0, "#8C4A22"],
+  [1.5, "#C9601F"],
+  [2.0, "#F07A1E"],
+  [2.5, "#F04E2B"],
+  [3.0, "#E02424"],
 ];
 
 type Lab = [number, number, number];
@@ -54,9 +54,9 @@ function oklabToHex([L, a, b]: Lab): string {
 
 const LAB_STOPS = RAMP_STOPS.map(([v, hex]) => [v, hexToOklab(hex)] as const);
 
-/** Colour for an anomaly in °C. NaN / null → paper (no ink). */
+/** Colour for an anomaly in °C. NaN / null → the card colour (no departure, no colour). */
 export function rampColor(anomaly: number | null | undefined): string {
-  if (anomaly == null || Number.isNaN(anomaly)) return "#E8E4D9";
+  if (anomaly == null || Number.isNaN(anomaly)) return "#1C2433";
   const v = Math.max(-3, Math.min(3, anomaly));
   for (let i = 0; i < LAB_STOPS.length - 1; i++) {
     const [v0, c0] = LAB_STOPS[i];
@@ -73,6 +73,10 @@ export function rampColor(anomaly: number | null | undefined): string {
   return oklabToHex(LAB_STOPS[LAB_STOPS.length - 1][1]);
 }
 
-/** Text colour over a ramp fill (DESIGN §2.1): ink below |1.5|, paper at or above. */
+/** Text over a ramp fill (DESIGN r2 §2.2): light ink except on the brightest cool stops and the +2 orange. */
 export const rampTextColor = (anomaly: number) =>
-  Math.abs(anomaly) >= 1.5 ? "#F4F1EA" : "#16181A";
+  anomaly <= -2.0 || (anomaly >= 1.75 && anomaly < 2.4) ? "#0B1220" : "#EEF2F7";
+
+/** Soft glow in the fill's own colour for values at or beyond +2 °C (hero number, hot map cells). */
+export const rampGlow = (anomaly: number) =>
+  anomaly >= 2 ? `0 0 24px ${rampColor(anomaly)}66` : "none";

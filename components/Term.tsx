@@ -31,8 +31,8 @@ export function Term({ k, children }: { k: GlossaryKey; children?: ReactNode }) 
       </button>
       {open && (
         <span role="tooltip" id={id} className="term-pop">
-          <span className="label-sm block">{g.full}</span>
-          <span className="block mt-1">{g.def}</span>
+          <span className="term-title">{g.full}</span>
+          <span className="block">{g.def}</span>
         </span>
       )}
     </span>

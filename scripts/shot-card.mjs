@@ -1,0 +1,12 @@
+import { chromium } from "playwright-core";
+const [,, url, out, sel, w = "1280", open = ""] = process.argv;
+const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
+const page = await browser.newPage({ viewport: { width: +w, height: 900 } });
+await page.goto(url, { waitUntil: "load" });
+await page.waitForFunction(() => !document.querySelector(".display .dash"), null, { timeout: 30000 }).catch(() => {});
+await page.waitForTimeout(1500);
+if (open) await page.locator(`${sel} details.drawer > summary`).first().click();
+await page.waitForTimeout(300);
+await page.locator(sel).first().screenshot({ path: out });
+await browser.close();
+console.log("ok");

@@ -13,6 +13,8 @@ export type HeatContentData = {
   latest: HeatMonth;
   /** Record high of the eastern band (180°–100°W) with its month. */
   maxEast: { month: string; value: number };
+  /** Record high of the eastern band excluding the latest month. */
+  previousRecord: { month: string; value: number };
 };
 
 export function parseHeatContent(text: string): HeatMonth[] {
@@ -27,8 +29,13 @@ export function parseHeatContent(text: string): HeatMonth[] {
 
 export function deriveHeatContent(series: HeatMonth[]): HeatContentData {
   let maxEast = { month: series[0].month, value: series[0].values[2] };
-  for (const s of series) if (s.values[2] > maxEast.value) maxEast = { month: s.month, value: s.values[2] };
-  return { series, latest: series[series.length - 1], maxEast };
+  let previousRecord = maxEast;
+  const latest = series[series.length - 1];
+  for (const s of series) {
+    if (s.values[2] > maxEast.value) maxEast = { month: s.month, value: s.values[2] };
+    if (s.month !== latest.month && s.values[2] > previousRecord.value) previousRecord = { month: s.month, value: s.values[2] };
+  }
+  return { series, latest, maxEast, previousRecord };
 }
 
 export async function getHeatContent(): Promise<Result<HeatContentData>> {

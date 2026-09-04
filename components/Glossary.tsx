@@ -1,17 +1,18 @@
 import { GLOSSARY } from "@/lib/glossary";
-import { Plate } from "./Plate";
 
 export function Glossary() {
   return (
-    <Plate id="glossary" title="Glossary" provenance="Definitions follow NOAA CPC usage">
-      <dl className="m-0 grid gap-x-10 gap-y-4 sm:grid-cols-2" style={{ maxWidth: "var(--measure-plate)" }}>
+    <section className="card" aria-labelledby="glossary-h">
+      <h2 id="glossary-h" className="headline">Explain the words</h2>
+      <dl className="m-0 grid gap-x-10 gap-y-5 sm:grid-cols-2">
         {Object.entries(GLOSSARY).map(([k, g]) => (
           <div key={k}>
-            <dt className="label-sm">{g.full}{g.term !== g.full && g.term !== g.full.toLowerCase() ? <span className="meta ml-2 text-ink-3 normal-case tracking-normal">{g.term}</span> : null}</dt>
-            <dd className="m-0 mt-1 text-ink-2" style={{ fontSize: 14, lineHeight: 1.5 }}>{g.def}</dd>
+            <dt className="strong" style={{ fontSize: 17 }}>{g.full}</dt>
+            <dd className="m-0 mt-1" style={{ fontSize: 15, lineHeight: 1.55 }}>{g.def}</dd>
           </div>
         ))}
       </dl>
-    </Plate>
+      <p className="source m-0">Wherever one of these words appears on the page, tap it for the definition.</p>
+    </section>
   );
 }

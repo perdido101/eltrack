@@ -17,11 +17,41 @@ export type WeeklyRow = {
   anom: Record<Region, number>;
 };
 
+export type Trend = "strengthening" | "holding" | "weakening";
+
 export type WeeklySstData = {
   latest: WeeklyRow;
   /** Trailing 52 weeks, oldest first. */
   last52: WeeklyRow[];
+  /** Central-Pacific change over four weeks, signed by phase (COPY.md §0). */
+  trend: { kind: Trend; delta: number };
+  /** For the central Pacific: the last earlier week at or beyond today's value, or a record. */
+  highestSince: { kind: "record" } | { kind: "since"; date: string } | { kind: "normal" };
+  /** Record weekly central-Pacific anomaly in the file, by magnitude in the current direction. */
+  record34: { date: string; value: number };
 };
+
+export function deriveWeekly(rows: WeeklyRow[]): WeeklySstData {
+  const latest = rows[rows.length - 1];
+  const v = latest.anom["Niño 3.4"];
+  const sign = v >= 0 ? 1 : -1;
+  const back = rows[rows.length - 5]; // four weeks earlier
+  const delta = back ? +(v - back.anom["Niño 3.4"]).toFixed(2) : 0;
+  const signed = delta * sign;
+  const trend: Trend = signed >= 0.2 ? "strengthening" : signed <= -0.2 ? "weakening" : "holding";
+  let highestSince: WeeklySstData["highestSince"] = { kind: "normal" };
+  if (Math.abs(v) >= 0.5) {
+    let since: string | null = null;
+    for (let i = rows.length - 2; i >= 0; i--) {
+      const w = rows[i].anom["Niño 3.4"] * sign;
+      if (w >= Math.abs(v) && rows[i].date < latest.date.slice(0, 4) + "-01-01") { since = rows[i].date; break; }
+    }
+    highestSince = since ? { kind: "since", date: since } : { kind: "record" };
+  }
+  let record34 = { date: rows[0].date, value: rows[0].anom["Niño 3.4"] };
+  for (const r of rows) if (r.anom["Niño 3.4"] * sign > record34.value * sign) record34 = { date: r.date, value: r.anom["Niño 3.4"] };
+  return { latest, last52: rows.slice(-52), trend: { kind: trend, delta }, highestSince, record34 };
+}
 
 const MONTHS: Record<string, string> = {
   JAN: "01", FEB: "02", MAR: "03", APR: "04", MAY: "05", JUN: "06",
@@ -57,7 +87,7 @@ export async function getWeeklySst(): Promise<Result<WeeklySstData>> {
     const text = await fetchText(WEEKLY_SST_URL, REVALIDATE.weekly);
     const rows = parseWeekly(text);
     if (rows.length < 52) return fail("Weekly SST file parsed to too few rows");
-    return ok({ latest: rows[rows.length - 1], last52: rows.slice(-52) });
+    return ok(deriveWeekly(rows));
   } catch (e) {
     return fail(e instanceof Error ? e.message : String(e));
   }

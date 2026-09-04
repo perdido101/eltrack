@@ -1,45 +1,49 @@
 "use client";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFeed } from "@/lib/useFeed";
 import { NINO_BOXES, type PacificGrid } from "@/lib/sources/pacificSst";
 import type { Buoy, BuoysData } from "@/lib/sources/buoys";
-import { BuoyPanel } from "./BuoyPanel";
 import { rampColor } from "@/lib/ramp";
-import { fmtAnom } from "@/lib/enso";
-import { fmtDate } from "@/lib/format";
-import { Plate } from "./Plate";
-import { Provenance } from "./Provenance";
-import { SignalLost } from "./SignalLost";
+import { vsNormal, throughDate } from "@/lib/words";
+import { Card, stateOf } from "./Card";
+import { BuoyPanel } from "./BuoyPanel";
 import { RampLegend } from "./RampLegend";
 
 type Layer = "anom" | "sst";
-const LAND = "#B9B4A8";
-const INK = "#16181A";
+const LAND = "#2A3142";
+const INK = "#EEF2F7";
+const PLAIN: Record<string, string> = { n12: "Off Peru", n3: "Eastern", n34: "Central", n4: "Western" };
+// Label placement: western and central above their boxes, eastern and Peru below, so none collide.
+const BELOW = new Set(["n3", "n12"]);
 
-/** Absolute SST as ink density — colour stays reserved for anomalies. */
+/** Absolute temperature as light density — colour stays reserved for departure from normal. */
 function sstColor(t: number): string {
-  const a = Math.min(1, Math.max(0, (t - 16) / 16)); // 16 → 32 °C
-  const g = Math.round(232 - a * 190);
-  return `rgb(${g},${g - 2},${g - 6})`;
+  const a = Math.min(1, Math.max(0, (t - 16) / 16));
+  const g = Math.round(28 + a * 200);
+  return `rgb(${g},${Math.round(g * 0.97)},${Math.round(g * 0.9)})`;
 }
-
 const lonLabel = (lon: number) => (lon === 180 ? "180°" : lon < 180 ? `${lon}°E` : `${360 - lon}°W`);
-const latLabel = (lat: number) => (lat === 0 ? "0°" : lat > 0 ? `${lat}°N` : `${-lat}°S`);
+const latLabel = (lat: number) => (lat === 0 ? "Equator" : lat > 0 ? `${lat}°N` : `${-lat}°S`);
+const signed = (v: number, d = 1) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(d)}`;
 
 export function PacificMap() {
   const feed = useFeed<PacificGrid>("pacific-sst", 3600_000);
-  const state = feed.isLoading ? "loading" : feed.error && !feed.data ? "lost" : feed.error ? "stale" : "ok";
+  const buoys = useFeed<BuoysData>("buoys", 3600_000);
   const g = feed.data;
   const [layer, setLayer] = useState<Layer>("anom");
   const [showBoxes, setShowBoxes] = useState(true);
   const [showBuoys, setShowBuoys] = useState(true);
-  const buoys = useFeed<BuoysData>("buoys", 3600_000);
   const [picked, setPicked] = useState<string | null>(null);
-  const pickedBuoy: Buoy | undefined = buoys.data?.buoys.find((b) => b.id === picked);
   const [hover, setHover] = useState<{ lat: number; lon: number; anom: number | null; sst: number | null } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const wellRef = useRef<HTMLDivElement>(null);
+  // On narrow screens the map scrolls; open it on the eastern Pacific, where the action is.
+  useEffect(() => {
+    const el = wellRef.current;
+    if (el && el.scrollWidth > el.clientWidth) el.scrollLeft = el.scrollWidth;
+  }, [g]);
+  const pickedBuoy: Buoy | undefined = buoys.data?.buoys.find((b) => b.id === picked);
 
-  // Geometry: 1 SVG unit per degree; x runs 120°E → 70°W, y runs 25°N → 25°S.
   const lon0 = 120, lon1 = 290, lat0 = 25, lat1 = -25;
   const W = lon1 - lon0, H = lat0 - lat1;
   const xOf = (lon: number) => lon - lon0;
@@ -47,16 +51,16 @@ export function PacificMap() {
 
   const cells = useMemo(() => {
     if (!g) return null;
-    const out: { x: number; y: number; fill: string; k: number }[] = [];
-    for (let j = 0; j < g.nLat; j++) {
-      for (let i = 0; i < g.nLon; i++) {
-        const k = j * g.nLon + i;
-        const v = layer === "anom" ? g.anom[k] : g.sst[k];
-        const fill = v == null ? LAND : layer === "anom" ? rampColor(v) : sstColor(v);
-        out.push({ x: xOf(g.lon0 + i * g.step - g.step / 2), y: yOf(g.lat0 + j * g.step + g.step / 2), fill, k });
-      }
+    const calm: { x: number; y: number; fill: string; k: number }[] = [];
+    const hot: typeof calm = [];
+    for (let j = 0; j < g.nLat; j++) for (let i = 0; i < g.nLon; i++) {
+      const k = j * g.nLon + i;
+      const v = layer === "anom" ? g.anom[k] : g.sst[k];
+      const fill = v == null ? LAND : layer === "anom" ? rampColor(v) : sstColor(v);
+      const c = { x: xOf(g.lon0 + i * g.step - g.step / 2), y: yOf(g.lat0 + j * g.step + g.step / 2), fill, k };
+      (layer === "anom" && v != null && v >= 1.5 ? hot : calm).push(c);
     }
-    return out;
+    return { calm, hot };
   }, [g, layer]);
 
   const onMove = (e: React.PointerEvent<SVGSVGElement>) => {
@@ -64,121 +68,120 @@ export function PacificMap() {
     const r = svgRef.current.getBoundingClientRect();
     const lon = lon0 + ((e.clientX - r.left) / r.width) * W;
     const lat = lat0 - ((e.clientY - r.top) / r.height) * H;
-    const i = Math.round((lon - g.lon0) / g.step);
-    const j = Math.round((lat - g.lat0) / g.step);
+    const i = Math.round((lon - g.lon0) / g.step), j = Math.round((lat - g.lat0) / g.step);
     if (i < 0 || j < 0 || i >= g.nLon || j >= g.nLat) return setHover(null);
     const k = j * g.nLon + i;
     setHover({ lat: g.lat0 + j * g.step, lon: g.lon0 + i * g.step, anom: g.anom[k], sst: g.sst[k] });
   };
 
+  const n34 = g?.boxes.n34 ?? null;
+  const lead = !g ? "" : n34 != null && n34 >= 0.5 ? "Red is warmer than usual, blue is cooler. The warm band along the equator is El Niño."
+    : n34 != null && n34 <= -0.5 ? "Red is warmer than usual, blue is cooler. The cool band along the equator is La Niña."
+    : "Red is warmer than usual, blue is cooler. No strong band along the equator means no El Niño or La Niña right now.";
+
   return (
-    <Plate
-      id="basin"
-      title="Equatorial Pacific · sea-surface temperature anomaly"
-      state={state}
+    <Card
+      id="map"
       bleed
-      provenance={<Provenance source="NOAA OISST v2.1 NRT" obs={g ? fmtDate(g.time.slice(0, 10)) : undefined} refresh="1H" stale={state === "stale"} />}
+      headline="Where the ocean is warmer than normal"
+      lead={<p className="m-0 body" style={{ fontSize: 18 }}>{lead || <span className="dash" />}</p>}
+      state={stateOf(feed)}
+      sourceName="NOAA's satellite feed"
+      failed="the sea-surface temperature grid"
+      lastGoodAt={feed.lastGoodAt}
+      fetchedAt={feed.fetchedAt}
+      source={<>Satellite sea-surface temperature, {g ? throughDate(g.time.slice(0, 10)) : "…"} · NOAA OISST · Buoys: NOAA PMEL</>}
+      meaning="Normally the warmest water sits in the western Pacific and the coast of South America is cool. During El Niño the warm water spreads east along the equator — that's the red band, and it's what shifts rainfall and storms around the world."
+      details={
+        <>
+          <p>1° grid, 25°N–25°S, 120°E–70°W, from NOAA OISST v2.1 near-real-time. Departures are from OISST's own 1971–2000 daily baseline, which is why the region values here run a few tenths warmer than NOAA's weekly figures on the 1991–2020 baseline.</p>
+          <p><strong>The four regions.</strong> Niño 1+2 (0–10°S, 90–80°W, "off Peru") · Niño 3 (5°N–5°S, 150–90°W, "eastern") · Niño 3.4 (5°N–5°S, 170–120°W, "central" — the one forecasters use) · Niño 4 (5°N–5°S, 160°E–150°W, "western"). Region values on the map are area-weighted averages of this grid.</p>
+          <p><strong>Buoys.</strong> TAO/TRITON moorings, latest daily report per mooring; the "warm layer" depth is the 20 °C isotherm. Grey cells are land or missing data.</p>
+        </>
+      }
     >
-      {state === "lost" ? (
-        <SignalLost source="NOAA CoastWatch ERDDAP" file="ncdcOisst21NrtAgg" lastGoodAt={feed.lastGoodAt} error={feed.error} />
-      ) : (
-        <div className="grid gap-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Map layers">
-              <button type="button" className="tbtn" aria-pressed={layer === "anom"} onClick={() => setLayer("anom")}>Anomaly</button>
-              <button type="button" className="tbtn" aria-pressed={layer === "sst"} onClick={() => setLayer("sst")}>Sea surface temperature</button>
-              <button type="button" className="tbtn" aria-pressed={showBoxes} onClick={() => setShowBoxes((v) => !v)}>Region boxes</button>
-              <button type="button" className="tbtn" aria-pressed={showBuoys} onClick={() => setShowBuoys((v) => !v)}>Buoys{buoys.data ? ` ${buoys.data.count}` : ""}</button>
-            </div>
-            <p className="meta m-0 text-ink-3" aria-live="polite" style={{ minHeight: 18 }}>
-              {hover
-                ? `${latLabel(Math.round(hover.lat * 10) / 10)} ${lonLabel(Math.round(hover.lon * 10) / 10 > 180 ? Math.round(hover.lon) : Math.round(hover.lon))} · ${hover.anom == null ? "land" : `anomaly ${fmtAnom(hover.anom, 2)} °C · SST ${hover.sst?.toFixed(1)} °C`}`
-                : g ? "Hover for a cell readout" : ""}
-            </p>
-          </div>
-
-          <div className="map-well">
-            <svg
-              ref={svgRef}
-              viewBox={`0 0 ${W} ${H}`}
-              width="100%"
-              role="img"
-              aria-label={g ? `Sea-surface temperature ${layer === "anom" ? "anomaly" : ""} across the equatorial Pacific on ${fmtDate(g.time.slice(0, 10))}. Niño 3.4 box mean anomaly ${fmtAnom(g.boxes.n34 ?? 0, 2)} °C.` : "Map loading"}
-              style={{ background: "var(--color-paper-sink)", border: "1px solid var(--color-rule)", cursor: g ? "crosshair" : "default" }}
-              onPointerMove={onMove}
-              onPointerLeave={() => setHover(null)}
-            >
-              {cells && (
-                <g className="sweep" shapeRendering="crispEdges">
-                  {cells.map((c) => (
-                    <rect key={c.k} x={c.x} y={c.y} width={g!.step} height={g!.step} fill={c.fill} />
-                  ))}
-                </g>
-              )}
-              {/* Graticule */}
-              {[-20, -10, 0, 10, 20].map((lat) => (
-                <line key={lat} x1={0} x2={W} y1={yOf(lat)} y2={yOf(lat)} stroke={INK} strokeOpacity={lat === 0 ? 0.6 : 0.15} strokeWidth={lat === 0 ? 0.25 : 0.15} />
-              ))}
-              {[150, 180, 210, 240, 270].map((lon) => (
-                <line key={lon} x1={xOf(lon)} x2={xOf(lon)} y1={0} y2={H} stroke={INK} strokeOpacity={0.15} strokeWidth={0.15} />
-              ))}
-              {/* Niño boxes */}
-              {showBoxes && NINO_BOXES.map((b) => (
-                <g key={b.id}>
-                  <rect x={xOf(b.lon[0])} y={yOf(b.lat[1])} width={b.lon[1] - b.lon[0]} height={b.lat[1] - b.lat[0]} fill="none" stroke={INK} strokeWidth={0.35} strokeDasharray={b.id === "n34" ? undefined : "1 0.7"} />
-                  <text x={b.lon[1] >= 280 ? xOf(b.lon[1]) : xOf(b.lon[0]) + 1} textAnchor={b.lon[1] >= 280 ? "end" : "start"} y={yOf(b.lat[1]) - 0.8} fontSize={2.2} fontFamily="var(--font-sans)" fontWeight={600} fill={INK} letterSpacing={0.15} stroke="#F4F1EA" strokeWidth={0.7} paintOrder="stroke" strokeLinejoin="round">
-                    {b.name.toUpperCase()}{g?.boxes[b.id] != null ? `  ${fmtAnom(g.boxes[b.id]!, 1)}` : ""}
-                  </text>
-                </g>
-              ))}
-              {/* Axis labels inside the frame */}
-              {[120, 150, 180, 210, 240, 270].map((lon) => (
-                <text key={lon} x={xOf(lon) + 0.6} y={H - 0.8} fontSize={2} fontFamily="var(--font-mono)" fill={INK} fillOpacity={0.7}>{lonLabel(lon)}</text>
-              ))}
-              {[20, 0, -20].map((lat) => (
-                <text key={lat} x={0.6} y={yOf(lat) - 0.6} fontSize={2} fontFamily="var(--font-mono)" fill={INK} fillOpacity={0.7}>{latLabel(lat)}</text>
-              ))}
-              {/* TAO/TRITON moorings */}
-              {showBuoys && buoys.data?.buoys.map((b) => {
-                const sel = b.id === picked;
-                return (
-                  <g
-                    key={b.id}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Buoy ${b.id}${b.sst ? `, SST ${b.sst.value.toFixed(1)} °C` : ""}`}
-                    aria-pressed={sel}
-                    style={{ cursor: "pointer", outline: "none" }}
-                    onClick={(e) => { e.stopPropagation(); setPicked(sel ? null : b.id); }}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setPicked(sel ? null : b.id); } }}
-                  >
-                    <circle cx={xOf(b.lon)} cy={yOf(b.lat)} r={sel ? 1.6 : 1.1} fill={sel ? INK : "#F4F1EA"} stroke={INK} strokeWidth={0.35} />
-                    {!b.sst && <line x1={xOf(b.lon) - 0.7} x2={xOf(b.lon) + 0.7} y1={yOf(b.lat)} y2={yOf(b.lat)} stroke={INK} strokeWidth={0.3} />}
-                  </g>
-                );
-              })}
-              {!g && <text x={W / 2} y={H / 2} textAnchor="middle" fontSize={3} fontFamily="var(--font-mono)" fill="#83888C">———</text>}
-            </svg>
-          </div>
-
-          {showBuoys && (pickedBuoy ? <BuoyPanel buoy={pickedBuoy} onClose={() => setPicked(null)} /> : (
-            <p className="meta m-0 text-ink-3">
-              {buoys.data ? `${buoys.data.count} TAO/TRITON moorings reporting in the last six days (NOAA PMEL). Select one for its latest surface and subsurface temperatures; a dash marks a mooring with no recent SST.` : buoys.error ? `Buoys: signal lost · PMEL ERDDAP · ${buoys.error}` : "Buoys loading"}
-            </p>
-          ))}
-          <div className="legend-row">
-            {layer === "anom" ? <RampLegend /> : (
-              <div className="grid gap-1">
-                <div style={{ height: 10, border: "1px solid var(--color-rule)", background: `linear-gradient(90deg, ${sstColor(16)}, ${sstColor(32)})` }} />
-                <div className="meta flex justify-between text-ink-3"><span>16 °C</span><span>24</span><span>32 °C</span></div>
-              </div>
-            )}
-            <p className="meta m-0 text-ink-3">
-              1° grid, 25°N–25°S, land in grey. Anomalies against OISST's own 1971–2000 daily climatology, so box means run a few tenths warmer than CPC's weekly values on the 1991–2020 base. Box means are area-weighted from this grid.
-            </p>
-          </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Map layers">
+          <button type="button" className="btn" aria-pressed={layer === "anom"} onClick={() => setLayer("anom")}>Warmer / cooler than normal</button>
+          <button type="button" className="btn" aria-pressed={layer === "sst"} onClick={() => setLayer("sst")}>Actual temperature</button>
+          <button type="button" className="btn" aria-pressed={showBoxes} onClick={() => setShowBoxes((v) => !v)}>Show the four regions</button>
+          <button type="button" className="btn" aria-pressed={showBuoys} onClick={() => setShowBuoys((v) => !v)}>Show buoys</button>
         </div>
-      )}
-    </Plate>
+        <p className="caption m-0" aria-live="polite" style={{ minHeight: 20 }}>
+          {hover ? `${latLabel(Math.round(hover.lat))} ${lonLabel(Math.round(hover.lon))} · ${hover.anom == null ? "land" : `${vsNormal(hover.anom)} · ${hover.sst?.toFixed(1)} °C`}` : g ? "Hover or tap the map for a reading" : ""}
+        </p>
+      </div>
+
+      <div className="map-well" ref={wellRef}>
+        <svg
+          ref={svgRef}
+          viewBox={`0 0 ${W} ${H}`}
+          width="100%"
+          role="img"
+          aria-label={g ? `Map of where the Pacific is warmer or cooler than normal, ${throughDate(g.time.slice(0, 10))}. Central Pacific ${n34 != null ? vsNormal(n34) : ""}.` : "Map loading"}
+          style={{ background: "var(--color-bg-3)", cursor: g ? "crosshair" : "default" }}
+          onPointerMove={onMove}
+          onPointerLeave={() => setHover(null)}
+        >
+          {cells && (
+            <>
+              <g shapeRendering="crispEdges">{cells.calm.map((c) => <rect key={c.k} x={c.x} y={c.y} width={g!.step} height={g!.step} fill={c.fill} />)}</g>
+              <g shapeRendering="crispEdges" className="breathe">{cells.hot.map((c) => <rect key={c.k} x={c.x} y={c.y} width={g!.step} height={g!.step} fill={c.fill} />)}</g>
+            </>
+          )}
+          {[-20, -10, 0, 10, 20].map((lat) => (
+            <line key={lat} x1={0} x2={W} y1={yOf(lat)} y2={yOf(lat)} stroke={INK} strokeOpacity={lat === 0 ? 0.55 : 0.12} strokeWidth={lat === 0 ? 0.25 : 0.15} />
+          ))}
+          {[150, 180, 210, 240, 270].map((lon) => (
+            <line key={lon} x1={xOf(lon)} x2={xOf(lon)} y1={0} y2={H} stroke={INK} strokeOpacity={0.12} strokeWidth={0.15} />
+          ))}
+          {showBoxes && NINO_BOXES.map((b) => {
+            const val = g?.boxes[b.id];
+            const right = b.lon[1] >= 280;
+            const below = BELOW.has(b.id);
+            return (
+              <g key={b.id}>
+                <rect x={xOf(b.lon[0])} y={yOf(b.lat[1])} width={b.lon[1] - b.lon[0]} height={b.lat[1] - b.lat[0]} fill="none" stroke={INK} strokeWidth={0.35} strokeDasharray={b.id === "n34" ? undefined : "1 0.7"} />
+                <text x={right ? xOf(b.lon[1]) : xOf(b.lon[0]) + 1} textAnchor={right ? "end" : "start"} y={below ? yOf(b.lat[0]) + 2.8 : yOf(b.lat[1]) - 0.9} fontSize={2.3} fontFamily="var(--font-sans)" fontWeight={600} fill={INK} stroke="#0B1220" strokeWidth={0.7} paintOrder="stroke" strokeLinejoin="round">
+                  {PLAIN[b.id]}{val != null ? `  ${signed(val)} °C` : ""}
+                </text>
+              </g>
+            );
+          })}
+          {showBuoys && buoys.data?.buoys.map((b) => {
+            const sel = b.id === picked;
+            return (
+              <g key={b.id} role="button" tabIndex={0} aria-label={`Buoy at ${b.id}${b.sst ? `, ${b.sst.value.toFixed(1)} degrees` : ""}`} aria-pressed={sel} style={{ cursor: "pointer", outline: "none" }}
+                onClick={(e) => { e.stopPropagation(); setPicked(sel ? null : b.id); }}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setPicked(sel ? null : b.id); } }}>
+                <circle cx={xOf(b.lon)} cy={yOf(b.lat)} r={sel ? 1.7 : 1.1} fill={sel ? INK : "#0B1220"} stroke={INK} strokeWidth={0.35} />
+              </g>
+            );
+          })}
+          {[120, 150, 180, 210, 240, 270].map((lon) => (
+            <text key={lon} x={xOf(lon) + 0.6} y={H - 0.9} fontSize={2} fontFamily="var(--font-sans)" fill={INK} fillOpacity={0.7}>{lonLabel(lon)}</text>
+          ))}
+          {[20, 0, -20].map((lat) => (
+            <text key={lat} x={0.6} y={yOf(lat) - 0.7} fontSize={2} fontFamily="var(--font-sans)" fill={INK} fillOpacity={0.7}>{latLabel(lat)}</text>
+          ))}
+          {!g && <text x={W / 2} y={H / 2} textAnchor="middle" fontSize={3} fontFamily="var(--font-sans)" fill="#8592A6">Loading the map…</text>}
+        </svg>
+      </div>
+
+      {showBuoys && (pickedBuoy ? <BuoyPanel buoy={pickedBuoy} onClose={() => setPicked(null)} /> : (
+        <p className="caption m-0">
+          {buoys.data ? `The dots are ${buoys.data.count} ocean buoys reporting this week. Tap one to see how deep the warm water goes.` : buoys.error ? "Couldn't reach the buoy network just now." : "Loading buoys…"}{" "}<span className="sm:hidden">Swipe the map sideways to see the whole Pacific.</span>
+        </p>
+      ))}
+      <div className="legend-row">
+        {layer === "anom" ? <RampLegend /> : (
+          <div className="grid gap-1">
+            <div style={{ height: 10, borderRadius: 5, background: `linear-gradient(90deg, ${sstColor(16)}, ${sstColor(32)})` }} />
+            <div className="caption flex justify-between"><span>16 °C</span><span>Actual temperature</span><span>32 °C</span></div>
+          </div>
+        )}
+        <p className="caption m-0">{layer === "anom" ? "Dashed boxes are the four regions forecasters measure; the solid one is the central Pacific." : "Lighter is warmer. Switch back to see departures from normal."}</p>
+      </div>
+    </Card>
   );
 }

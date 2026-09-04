@@ -37,7 +37,7 @@ export function AnomalyBars({ values, max = 3, width = 260, height = 40, title }
           />
         );
       })}
-      <line x1={0} x2={width} y1={zero} y2={zero} stroke="#16181A" strokeWidth={0.75} />
+      <line x1={0} x2={width} y1={zero} y2={zero} stroke="#8592A6" strokeWidth={0.75} />
     </svg>
   );
 }

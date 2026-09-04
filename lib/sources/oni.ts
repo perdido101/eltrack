@@ -38,6 +38,15 @@ export type OniData = {
   };
   /** Every event since 1950 meeting the five-consecutive-season rule. */
   events: OniEvent[];
+  /** Plain-language comparison for the latest value (COPY.md §1). */
+  comparison:
+    | { kind: "record" }
+    | { kind: "since"; event: OniEvent }
+    | { kind: "normal" };
+  /** How many past episodes of the same phase the latest value already exceeds. */
+  rankAmongEvents: { stronger: number; total: number };
+  /** Latest minus previous three-month value. */
+  delta: number;
 };
 
 export function parseOni(text: string): OniRow[] {
@@ -102,9 +111,23 @@ export function deriveOni(series: OniRow[]): OniData {
       runStart = series[k];
     }
   }
+  const events = findEvents(series);
+  const same = events.filter((e) => e.phase === phase);
+  const mag = Math.abs(latest.anom);
+  let comparison: OniData["comparison"] = { kind: "normal" };
+  if (phase !== "Neutral") {
+    // The most recent past episode whose peak beat today's value; none → a record.
+    const beat = same.filter((e) => Math.abs(e.peak) >= mag && e.end < latest.centre);
+    comparison = beat.length ? { kind: "since", event: beat[beat.length - 1] } : { kind: "record" };
+  }
+  const prev = series[series.length - 2];
   return {
     series,
     latest,
+    events,
+    comparison,
+    rankAmongEvents: { stronger: same.filter((e) => Math.abs(e.peak) < mag && e.end < latest.centre).length, total: same.filter((e) => e.end < latest.centre).length },
+    delta: prev ? +(latest.anom - prev.anom).toFixed(2) : 0,
     current: {
       phase,
       strength: strengthFor(latest.anom),
@@ -112,7 +135,6 @@ export function deriveOni(series: OniRow[]): OniData {
       runStart,
       isEpisode: runLength >= 5,
     },
-    events: findEvents(series),
   };
 }
 

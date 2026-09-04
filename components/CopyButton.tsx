@@ -12,7 +12,7 @@ export function CopyButton({ text, label = "Copy" }: { text: string; label?: str
   return (
     <button
       type="button"
-      className="tbtn"
+      className="btn"
       style={{ minWidth: "6.5em" }}
       aria-live="polite"
       onClick={async () => {
